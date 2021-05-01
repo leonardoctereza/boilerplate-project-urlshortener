@@ -27,11 +27,12 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl', function (req,res,next) {
   const originalUrl = req.body.url;
-  const url = new URL(originalUrl);
   try{
+    const url = new URL(originalUrl);
     dns.lookup(url.hostname,function (err,address) {
       if(err || !originalUrl.includes("http")) {
         res.json({ error: 'invalid url' });
+        return;
       }
       let objUrl = new UrlShortener({original_url:originalUrl});
       objUrl.save(function (err,obj) {
@@ -45,7 +46,7 @@ app.post('/api/shorturl', function (req,res,next) {
         return;
     })
     }catch(error){
-      res.status(500).json({"error":'invalid url'});
+      res.status(500).json({"error":'couldnt save url'});
       return;
     }
   });
