@@ -4,7 +4,7 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const UrlShortener = require('./urlModel');
-const {isValidUrl} = require('./utils');
+const dns = require('dns');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -26,27 +26,22 @@ app.get('/api/hello', function(req, res) {
 
 
 app.post('/api/shorturl', function (req,res,next) {
-  const url = req.body.url;
-  try {
-    if(isValidUrl(url)){
-      let objUrl = new UrlShortener({original_url:url});
+  const originalUrl = req.body.url;
+  const url = new URL(originalUrl);
+    dns.lookup(url.hostname,function (err,address) {
+      if(err) res.status(500).json({"error":'invalid url'});
+      let objUrl = new UrlShortener({original_url:originalUrl});
       objUrl.save(function (err,obj) {
-        if(err) throw err;
+        if(err){
+          console.log(err);
+          res.status(500).json({"error":'error saving on database'});
+        } 
         res.status(200).json(
           {original_url:obj.original_url,
             short_url:obj.short_url});
-          next();
-      });
-    }else{
-      res.status(500).json({"error":'invalid url'});
-      next();
-    }
-  } catch (error) {
-    res.status(500).json({"error": error});
-    next();
-  }
-
-});
+          });
+    })
+  });
 
 app.get('/api/shorturl/:urlId', async function (req,res,next) {
   const urlId = req.params.urlId;
@@ -55,6 +50,8 @@ app.get('/api/shorturl/:urlId', async function (req,res,next) {
     if(urlObj){
       console.log(urlObj);
       res.status(301).redirect(urlObj.original_url);
+    }else{
+      res.status(500).json({'error':'url not found'});
     }
   } catch (error) {
     res.status(500).json({'error':error});

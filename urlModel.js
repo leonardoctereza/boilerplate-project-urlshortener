@@ -3,7 +3,7 @@ const shortId = require('shortid');
 mongoose.connect(process.env.DB_URI,{ useNewUrlParser: true,useUnifiedTopology: true });
 
 const urlSchema = new mongoose.Schema({
-    original_url: {type: String, unique: true},
+    original_url: {type: String},
     short_url: {type: String, unique: true, default: shortId.generate}
 });
 const UrlShortener = mongoose.model('UrlShort',urlSchema);
